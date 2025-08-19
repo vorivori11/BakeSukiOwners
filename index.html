@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Bakesuki</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Lobster&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #FDF4F0; }
+        .font-lobster { font-family: 'Lobster', cursive; }
+        .bakesuki-brand-text { color: #6D2828; }
+        .btn-primary { background-color: #D98B99; color: white; }
+        .btn-primary:hover { background-color: #C77583; }
+        .btn-secondary { background-color: #a78bfa; color: white; }
+        .btn-secondary:hover { background-color: #8b5cf6; }
+        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; }
+        .collapsible-content.open { max-height: 2000px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #22c55e; }
+        input:checked + .slider:before { transform: translateX(22px); }
+        /* Animación de clic */
+        @keyframes click-effect {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+        .clicked {
+            animation: click-effect 0.2s ease-out;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+<div class="container mx-auto p-4 md:p-8">
+    <header class="text-center mb-12">
+        <h1 class="text-5xl font-lobster bakesuki-brand-text">Panel de Administración</h1>
+        <p class="text-xl text-gray-500 mt-2">Bakesuki</p>
+    </header>
+
+    <!-- Sección de Ganancias -->
+    <section class="mb-12">
+        <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-lg text-center">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold bakesuki-brand-text">Ganancias Totales</h2>
+                <button id="reiniciar-ganancias-btn" class="btn-danger text-xs font-bold py-1 px-2 rounded-lg">Reiniciar</button>
+            </div>
+            <p id="ganancias-totales" class="text-4xl font-bold text-green-500 mt-2">Gs. 0</p>
+        </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <!-- Columna de Pedidos -->
+        <section>
+            <div class="mb-6">
+                <input type="search" id="search-pedidos" placeholder="🔍 Buscar pedido por nombre..." class="w-full p-2 border-gray-300 rounded-md shadow-sm">
+            </div>
+            <div class="space-y-6">
+                <!-- Pedidos Pendientes -->
+                <div>
+                    <button class="collapsible-trigger w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100">Pedidos Pendientes</button>
+                    <div class="collapsible-content open">
+                        <div id="pedidos-pendientes-contenedor" class="space-y-4"></div>
+                    </div>
+                </div>
+                <!-- Pedidos por Pagar -->
+                <div>
+                    <button class="collapsible-trigger w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100">Pedidos por Pagar</button>
+                    <div class="collapsible-content">
+                        <div id="pedidos-confirmados-contenedor" class="space-y-4"></div>
+                    </div>
+                </div>
+                <!-- Pedidos Entregados -->
+                <div>
+                    <button class="collapsible-trigger w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100">Pedidos Entregados</button>
+                    <div class="collapsible-content">
+                        <div id="pedidos-entregados-contenedor" class="space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Columna de Productos -->
+        <section>
+            <!-- Gestión de Stock -->
+            <div>
+                <button class="collapsible-trigger w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100">Gestión de Stock</button>
+                <div class="collapsible-content open">
+                    <div id="productos-contenedor" class="space-y-4"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Supabase SDK -->
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const SUPABASE_URL = 'https://cajscvluvmwlllyrrgeb.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhanNjdmx1dm13bGxseXJyZ2ViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1NjU0MDksImV4cCI6MjA3MTE0MTQwOX0.7R8igId24CLfVfDVjy_Q0V1pzy_z_bpxLU933-72_sI';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const gananciasContenedor = document.getElementById('ganancias-totales');
+    const pedidosPendientesContenedor = document.getElementById('pedidos-pendientes-contenedor');
+    const pedidosConfirmadosContenedor = document.getElementById('pedidos-confirmados-contenedor');
+    const pedidosEntregadosContenedor = document.getElementById('pedidos-entregados-contenedor');
+    const productosContenedor = document.getElementById('productos-contenedor');
+    const searchInput = document.getElementById('search-pedidos');
+
+    let todosLosPedidos = [];
+
+    const formatearPrecio = (valor) => new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 }).format(valor);
+
+    async function cargarDatos() {
+        // Cargar Ganancias
+        const { data: ganancia, error: errorGanancia } = await supabase.from('ganancias').select('total_ganado').eq('id', 1).single();
+        if (errorGanancia) console.error('Error al cargar ganancias:', errorGanancia);
+        else gananciasContenedor.textContent = formatearPrecio(ganancia.total_ganado);
+
+        // Cargar Pedidos
+        const { data, error } = await supabase.from('pedidos').select('*').order('created_at', { ascending: true });
+        if (error) {
+            console.error('Error al cargar todos los pedidos:', error);
+        } else {
+            todosLosPedidos = data;
+            filtrarYRenderizarPedidos();
+        }
+
+        // Cargar Productos
+        const { data: productos, error: errorProductos } = await supabase.from('productos').select('*').order('nombre');
+        if (errorProductos) console.error('Error al cargar productos:', errorProductos);
+        else renderizarProductos(productos);
+    }
+
+    function filtrarYRenderizarPedidos() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const pedidosFiltrados = todosLosPedidos.filter(p => p.nombre_cliente && p.nombre_cliente.toLowerCase().includes(searchTerm));
+
+        const pendientes = pedidosFiltrados.filter(p => !p.confirmado);
+        const confirmados = pedidosFiltrados.filter(p => p.confirmado && !p.pagado);
+        const entregados = pedidosFiltrados.filter(p => p.pagado);
+
+        renderizarPedidos(pendientes, pedidosPendientesContenedor, 'pendientes');
+        renderizarPedidos(confirmados, pedidosConfirmadosContenedor, 'confirmados');
+        renderizarPedidos(entregados, pedidosEntregadosContenedor, 'entregados');
+    }
+
+    function renderizarPedidos(pedidos, contenedor, tipo) {
+        contenedor.innerHTML = '';
+        if (pedidos.length === 0) {
+            contenedor.innerHTML = `<p class="text-center text-gray-500">No hay pedidos en esta sección.</p>`;
+            return;
+        }
+        pedidos.forEach(pedido => {
+            const pedidoCard = document.createElement('div');
+            pedidoCard.className = 'bg-white p-4 rounded-lg shadow-sm';
+            let controlesHTML = '';
+
+            if (tipo === 'pendientes') {
+                controlesHTML = `
+                        <button data-id="${pedido.id}" class="confirmar-pedido-btn btn-secondary text-sm font-bold py-1 px-3 rounded-lg">Confirmar</button>
+                        <button data-id="${pedido.id}" class="eliminar-pedido-btn btn-danger text-sm font-bold py-1 px-3 rounded-lg">Eliminar</button>
+                    `;
+            } else if (tipo === 'confirmados') {
+                controlesHTML = `
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm font-semibold">${pedido.pagado ? 'Pagado' : 'No Pagado'}</span>
+                            <label class="switch">
+                                <input type="checkbox" data-id="${pedido.id}" class="pagado-toggle-btn" ${pedido.pagado ? 'checked' : ''}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    `;
+            } else if (tipo === 'entregados') {
+                controlesHTML = `
+                        <button data-id="${pedido.id}" class="eliminar-pedido-btn btn-danger text-sm font-bold py-1 px-3 rounded-lg">Borrar</button>
+                    `;
+            }
+
+            const detalleProductosHTML = pedido.productos_detalle.map(p => `
+                    <div class="flex justify-between text-sm">
+                        <span>${p.cantidad}x ${p.nombre}</span>
+                        <span>${formatearPrecio(p.cantidad * p.precio_unitario)}</span>
+                    </div>
+                `).join('');
+
+            pedidoCard.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <p class="font-bold text-sm text-gray-500">${new Date(pedido.created_at).toLocaleString('es-PY')}</p>
+                        <p class="font-bold">${formatearPrecio(pedido.total)}</p>
+                    </div>
+                    <p class="font-semibold mt-2">Cliente: <span class="font-normal">${pedido.nombre_cliente || 'No especificado'}</span></p>
+                    <p class="font-semibold mt-1">Método de Pago: <span class="font-normal">${pedido.metodo_pago}</span></p>
+                    <div class="mt-2 border-t pt-2 space-y-1">
+                        ${detalleProductosHTML}
+                    </div>
+                    <div class="mt-2 border-t pt-2">
+                        <textarea data-id="${pedido.id}" class="notas-internas-textarea w-full border-gray-300 rounded-md text-sm mt-2" rows="2" placeholder="Añadir nota interna...">${pedido.notas_internas || ''}</textarea>
+                        <button data-id="${pedido.id}" class="guardar-nota-btn btn-primary text-xs font-bold py-1 px-2 rounded-lg mt-1">Guardar Nota</button>
+                    </div>
+                    <div class="flex justify-end space-x-2 mt-4">
+                        ${controlesHTML}
+                    </div>
+                `;
+            contenedor.appendChild(pedidoCard);
+        });
+    }
+
+    function renderizarProductos(productos) {
+        productosContenedor.innerHTML = '';
+        productos.forEach(producto => {
+            const productoCard = document.createElement('div');
+            productoCard.className = 'bg-white p-4 rounded-lg shadow-sm flex justify-between items-center';
+            productoCard.innerHTML = `
+                    <div>
+                        <p class="font-bold bakesuki-brand-text">${producto.nombre}</p>
+                        <p class="text-sm text-gray-500">Stock actual: <span class="font-bold">${producto.stock}</span></p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="stock-${producto.id}" class="w-20 border-gray-300 rounded-md shadow-sm text-sm" placeholder="Nuevo">
+                        <button data-id="${producto.id}" class="actualizar-stock-btn btn-primary text-sm font-bold py-1 px-3 rounded-lg">Actualizar</button>
+                    </div>
+                `;
+            productosContenedor.appendChild(productoCard);
+        });
+    }
+
+    // Eventos delegados para los botones
+    document.addEventListener('click', async (e) => {
+        const target = e.target;
+        const id = target.dataset.id;
+
+        // Animación de clic
+        if (target.tagName === 'BUTTON') {
+            target.classList.add('clicked');
+            target.addEventListener('animationend', () => {
+                target.classList.remove('clicked');
+            }, { once: true });
+        }
+
+        if (target.classList.contains('confirmar-pedido-btn')) {
+            const { error } = await supabase.from('pedidos').update({ confirmado: true }).eq('id', id);
+            if (error) console.error('Error al confirmar pedido:', error);
+        }
+
+        if (target.classList.contains('eliminar-pedido-btn')) {
+            if (confirm('¿Estás seguro de que quieres eliminar este pedido? No afectará el stock ni las ganancias.')) {
+                const { error } = await supabase.from('pedidos').delete().eq('id', id);
+                if (error) console.error('Error al eliminar pedido:', error);
+            }
+        }
+
+        if (target.classList.contains('actualizar-stock-btn')) {
+            const nuevoStockInput = document.getElementById(`stock-${id}`);
+            const nuevoStock = nuevoStockInput.value;
+            if (nuevoStock !== '') {
+                const { error } = await supabase.from('productos').update({ stock: parseInt(nuevoStock) }).eq('id', id);
+                if (error) console.error('Error al actualizar stock:', error);
+                else nuevoStockInput.value = ''; // Limpiar input si fue exitoso
+            }
+        }
+        if(target.classList.contains('collapsible-trigger')) {
+            const content = target.nextElementSibling;
+            content.classList.toggle('open');
+        }
+        if(target.id === 'reiniciar-ganancias-btn') {
+            if (confirm('¿Estás seguro de que quieres reiniciar las ganancias a cero? Esta acción no se puede deshacer.')) {
+                const { error } = await supabase.from('ganancias').update({ total_ganado: 0 }).eq('id', 1);
+                if (error) console.error('Error al reiniciar ganancias:', error);
+            }
+        }
+        if (target.classList.contains('guardar-nota-btn')) {
+            const nota = document.querySelector(`.notas-internas-textarea[data-id="${id}"]`).value;
+            const { error } = await supabase.from('pedidos').update({ notas_internas: nota }).eq('id', id);
+            if (error) console.error('Error al guardar la nota:', error);
+        }
+    });
+
+    document.addEventListener('change', async (e) => {
+        const target = e.target;
+        const id = target.dataset.id;
+        if (target.classList.contains('pagado-toggle-btn')) {
+            const { error } = await supabase.from('pedidos').update({ pagado: target.checked }).eq('id', id);
+            if (error) console.error('Error al actualizar estado de pago:', error);
+        }
+    });
+
+    searchInput.addEventListener('input', filtrarYRenderizarPedidos);
+
+    // Cargar datos y escuchar cambios en tiempo real
+    cargarDatos();
+
+    supabase.channel('public:pedidos')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, cargarDatos)
+        .subscribe();
+
+    supabase.channel('public:productos')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'productos' }, cargarDatos)
+        .subscribe();
+
+    supabase.channel('public:ganancias')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'ganancias' }, cargarDatos)
+        .subscribe();
+
+</script>
+</body>
+</html>
