@@ -173,6 +173,7 @@
                     `;
             } else if (tipo === 'confirmados') {
                 controlesHTML = `
+                        <button data-id="${pedido.id}" class="cancelar-pedido-btn btn-danger text-sm font-bold py-1 px-3 rounded-lg mr-2">Cancelar</button>
                         <div class="flex items-center space-x-2">
                             <span class="text-sm font-semibold">${pedido.pagado ? 'Pagado' : 'No Pagado'}</span>
                             <label class="switch">
@@ -281,6 +282,13 @@
         if (target.classList.contains('confirmar-pedido-btn')) {
             const { error } = await supabase.from('pedidos').update({ confirmado: true }).eq('id', id);
             if (error) console.error('Error al confirmar pedido:', error);
+        }
+
+        if (target.classList.contains('cancelar-pedido-btn')) {
+            if (confirm('¿Estás seguro de que quieres cancelar este pedido? El stock se devolverá.')) {
+                const { error } = await supabase.from('pedidos').update({ confirmado: false }).eq('id', id);
+                if (error) console.error('Error al cancelar pedido:', error);
+            }
         }
 
         if (target.classList.contains('eliminar-pedido-btn')) {
