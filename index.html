@@ -106,8 +106,9 @@
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    const SUPABASE_URL = 'https://cajscvluvmwlllyrrgeb.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhanNjdmx1dm13bGxseXJyZ2ViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1NjU0MDksImV4cCI6MjA3MTE0MTQwOX0.7R8igId24CLfVfDVjy_Q0V1pzy_z_bpxLU933-72_sI';
+    const SUPABASE_URL = 'https://uyrylcylwkhqxseplquqp.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5cnlsY3l3a2hxeHNlcGxxdXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTA1NDYsImV4cCI6MjA3MTA2NjU0Nn0.0K3nPF1PMdR5qrRlp1Wv9zyBfFOtdTrmKqmT75e6J7Q';
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const gananciasContenedor = document.getElementById('ganancias-totales');
@@ -231,11 +232,23 @@
                     </div>
                     <div id="edit-form-${producto.id}" class="collapsible-content mt-4 pt-4 border-t">
                         <form class="form-editar-producto" data-id="${producto.id}">
-                            <div class="space-y-2">
-                                <input name="nombre" type="text" value="${producto.nombre}" class="w-full border-gray-300 rounded-md text-sm">
-                                <textarea name="descripcion" class="w-full border-gray-300 rounded-md text-sm" rows="3">${producto.descripcion}</textarea>
-                                <input name="precio" type="number" value="${producto.precio}" class="w-full border-gray-300 rounded-md text-sm">
-                                <input name="stock" type="number" value="${producto.stock}" class="w-full border-gray-300 rounded-md text-sm">
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Nombre</label>
+                                    <input name="nombre" type="text" value="${producto.nombre}" class="w-full border-gray-300 rounded-md text-sm mt-1">
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Descripción</label>
+                                    <textarea name="descripcion" class="w-full border-gray-300 rounded-md text-sm mt-1" rows="3">${producto.descripcion}</textarea>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Precio</label>
+                                    <input name="precio" type="number" value="${producto.precio}" class="w-full border-gray-300 rounded-md text-sm mt-1">
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Stock</label>
+                                    <input name="stock" type="number" value="${producto.stock}" class="w-full border-gray-300 rounded-md text-sm mt-1">
+                                </div>
                                 <button type="submit" class="btn-primary text-sm font-bold py-1 px-3 rounded-lg">Guardar Cambios</button>
                             </div>
                         </form>
@@ -328,16 +341,11 @@
     // Cargar datos y escuchar cambios en tiempo real
     cargarDatos();
 
-    supabase.channel('public:pedidos')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, cargarDatos)
-        .subscribe();
-
-    supabase.channel('public:productos')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'productos' }, cargarDatos)
-        .subscribe();
-
-    supabase.channel('public:ganancias')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'ganancias' }, cargarDatos)
+    supabase.channel('public-changes')
+        .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+            console.log('Cambio detectado:', payload);
+            cargarDatos();
+        })
         .subscribe();
 
 </script>
