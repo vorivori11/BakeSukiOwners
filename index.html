@@ -390,9 +390,9 @@
             document.getElementById(`edit-form-${id}`).classList.toggle('open');
         }
 
-        if(target.classList.contains('collapsible-trigger')) {
-            const content = target.closest('div').querySelector('.collapsible-content');
-            if (content) {
+        if(target.classList.contains('collapsible-header')) {
+            const content = target.nextElementSibling;
+            if (content && content.classList.contains('collapsible-content')) {
                 content.classList.toggle('open');
             }
         }
@@ -421,8 +421,6 @@
             const hoy = new Date().toISOString().split('T')[0];
             fechaInicioInput.value = hoy;
             fechaFinInput.value = hoy;
-            fechaInicioEntregadosInput.value = hoy;
-            fechaFinEntregadosInput.value = hoy;
             filtrarYRenderizarPedidos();
         }
     });
@@ -462,8 +460,6 @@
     searchInput.addEventListener('input', filtrarYRenderizarPedidos);
     fechaInicioInput.addEventListener('change', filtrarYRenderizarPedidos);
     fechaFinInput.addEventListener('change', filtrarYRenderizarPedidos);
-    fechaInicioEntregadosInput.addEventListener('change', filtrarYRenderizarPedidos);
-    fechaFinEntregadosInput.addEventListener('change', filtrarYRenderizarPedidos);
 
     // Cargar datos y escuchar cambios en tiempo real
     cargarDatos();
