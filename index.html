@@ -160,6 +160,7 @@
 
     const SUPABASE_URL = 'https://cajscvluvmwlllyrrgeb.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhanNjdmx1dm13bGxseXJyZ2ViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1NjU0MDksImV4cCI6MjA3MTE0MTQwOX0.7R8igId24CLfVfDVjy_Q0V1pzy_z_bpxLU933-72_sI';
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const gananciasDetalle = document.getElementById('ganancias-detalle');
@@ -391,10 +392,7 @@
             content.classList.toggle('open');
         }
         if(target.id === 'reiniciar-ganancias-btn') {
-            if (confirm('¿Estás seguro de que quieres reiniciar las ganancias a cero? Esta acción no se puede deshacer.')) {
-                const { error } = await supabase.from('ganancias').update({ total_ganado: 0 }).eq('id', 1);
-                if (error) console.error('Error al reiniciar ganancias:', error);
-            }
+            // Esta función está deshabilitada por ahora
         }
         if (target.classList.contains('guardar-nota-btn')) {
             const nota = document.querySelector(`.notas-internas-textarea[data-id="${id}"]`).value;
