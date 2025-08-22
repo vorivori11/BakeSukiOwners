@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Lobster&display=swap" rel="stylesheet">
+    <!-- Pikaday Calendar CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #FDF4F0; }
         .font-lobster { font-family: 'Lobster', cursive; }
@@ -33,20 +35,10 @@
         }
 
         /* Estilo de la barra de scroll */
-        .collapsible-content::-webkit-scrollbar {
-            width: 8px;
-        }
-        .collapsible-content::-webkit-scrollbar-track {
-            background: #F9EBE4;
-            border-radius: 10px;
-        }
-        .collapsible-content::-webkit-scrollbar-thumb {
-            background: #D98B99;
-            border-radius: 10px;
-        }
-        .collapsible-content::-webkit-scrollbar-thumb:hover {
-            background: #C77583;
-        }
+        .collapsible-content::-webkit-scrollbar { width: 8px; }
+        .collapsible-content::-webkit-scrollbar-track { background: #F9EBE4; border-radius: 10px; }
+        .collapsible-content::-webkit-scrollbar-thumb { background: #D98B99; border-radius: 10px; }
+        .collapsible-content::-webkit-scrollbar-thumb:hover { background: #C77583; }
 
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -62,6 +54,48 @@
         }
         .clicked {
             animation: click-effect 0.2s ease-out;
+        }
+
+        /* Estilos del Calendario Temático */
+        .pika-single {
+            background: #ffffff; /* Fondo blanco */
+            border: 1px solid #D98B99;
+            border-radius: 8px;
+        }
+        .pika-title {
+            color: #6D2828;
+            font-weight: bold;
+        }
+        .pika-lmonth, .pika-rmonth {
+            color: #D98B99 !important;
+        }
+        .pika-button:hover {
+            background-color: #fce7f3 !important;
+            border-radius: 50%;
+        }
+        .is-today .pika-button {
+            color: #6D2828;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        .is-selected .pika-button {
+            background-color: #D98B99 !important;
+            box-shadow: none;
+            border-radius: 50%;
+        }
+        .pika-day.has-sale .pika-button {
+            background-color: transparent; /* Sin fondo de círculo */
+            border-radius: 0;
+            font-weight: bold;
+        }
+        .pika-day.has-sale:after {
+            content: '';
+            display: block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #D98B99;
+            margin: -4px auto 0;
         }
     </style>
 </head>
@@ -81,14 +115,22 @@
                 <p id="ganancias-periodo" class="text-4xl font-bold text-blue-500 mt-2">Gs. 0</p>
                 <span class="text-xs text-gray-400">toca para ver detalles ▼</span>
             </div>
-            <div id="ganancias-detalle" class="collapsible-content mt-4 text-left border-t pt-4">
+            <div id="ganancias-detalle" class="collapsible-content mt-4 text-left border-t pt-4 space-y-2">
                 <div class="flex justify-between text-gray-700">
-                    <span>Efectivo:</span>
+                    <span>Ingresos (Efectivo):</span>
                     <span id="ganancias-efectivo" class="font-semibold">Gs. 0</span>
                 </div>
-                <div class="flex justify-between text-gray-700 mt-1">
-                    <span>Transferencia:</span>
+                <div class="flex justify-between text-gray-700">
+                    <span>Ingresos (Transferencia):</span>
                     <span id="ganancias-transferencia" class="font-semibold">Gs. 0</span>
+                </div>
+                <div class="flex justify-between text-red-500">
+                    <span>Costo de Producción:</span>
+                    <span id="costo-periodo" class="font-semibold">Gs. 0</span>
+                </div>
+                <div class="flex justify-between text-green-600 font-bold border-t mt-2 pt-2">
+                    <span>Ganancia Neta:</span>
+                    <span id="ganancia-neta-periodo">Gs. 0</span>
                 </div>
             </div>
         </div>
@@ -148,7 +190,7 @@
             </div>
         </section>
 
-        <!-- Columna de Productos -->
+        <!-- Columna de Productos y Calendario -->
         <section>
             <!-- Gestión de Stock -->
             <div>
@@ -160,22 +202,37 @@
                     <div id="productos-contenedor" class="space-y-4 p-1"></div>
                 </div>
             </div>
+            <!-- Calendario de Ventas -->
+            <div class="mt-6">
+                <div class="collapsible-header flex justify-between items-center w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100 cursor-pointer">
+                    <span>Calendario de Ventas</span>
+                    <span class="transform transition-transform">▼</span>
+                </div>
+                <div class="collapsible-content open">
+                    <div id="calendario-container" class="bg-white p-2 rounded-xl shadow-lg"></div>
+                </div>
+            </div>
         </section>
     </div>
 </div>
 
-<!-- Supabase SDK -->
+<!-- Supabase SDK y Librerías -->
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    // Pikaday para el calendario
+    import Pikaday from 'https://cdn.jsdelivr.net/npm/pikaday/+esm';
 
     const SUPABASE_URL = 'https://cajscvluvmwlllyrrgeb.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhanNjdmx1dm13bGxseXJyZ2ViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1NjU0MDksImV4cCI6MjA3MTE0MTQwOX0.7R8igId24CLfVfDVjy_Q0V1pzy_z_bpxLU933-72_sI';
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const gananciasDetalle = document.getElementById('ganancias-detalle');
     const gananciasEfectivo = document.getElementById('ganancias-efectivo');
     const gananciasTransferencia = document.getElementById('ganancias-transferencia');
     const gananciasPeriodoContenedor = document.getElementById('ganancias-periodo');
+    const costoPeriodoContenedor = document.getElementById('costo-periodo');
+    const gananciaNetaPeriodoContenedor = document.getElementById('ganancia-neta-periodo');
     const pedidosPendientesContenedor = document.getElementById('pedidos-pendientes-contenedor');
     const pedidosConfirmadosContenedor = document.getElementById('pedidos-confirmados-contenedor');
     const pedidosEntregadosContenedor = document.getElementById('pedidos-entregados-contenedor');
@@ -185,10 +242,21 @@
     const fechaFinInput = document.getElementById('fecha-fin');
 
     let todosLosPedidos = [];
+    let todosLosProductos = [];
+    let calendario;
 
     const formatearPrecio = (valor) => new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 }).format(valor);
 
     async function cargarDatos() {
+        // Cargar Productos primero para tener los costos
+        const { data: productos, error: errorProductos } = await supabase.from('productos').select('*').order('nombre');
+        if (errorProductos) {
+            console.error('Error al cargar productos:', errorProductos);
+        } else {
+            todosLosProductos = productos;
+            renderizarProductos(productos);
+        }
+
         // Cargar Pedidos
         const { data, error } = await supabase.from('pedidos').select('*').order('created_at', { ascending: true });
         if (error) {
@@ -196,12 +264,8 @@
         } else {
             todosLosPedidos = data;
             filtrarYRenderizarPedidos();
+            actualizarCalendario();
         }
-
-        // Cargar Productos
-        const { data: productos, error: errorProductos } = await supabase.from('productos').select('*').order('nombre');
-        if (errorProductos) console.error('Error al cargar productos:', errorProductos);
-        else renderizarProductos(productos);
     }
 
     function filtrarYRenderizarPedidos() {
@@ -226,17 +290,28 @@
             });
         }
 
-        const gananciasPeriodo = entregadosFiltrados.reduce((sum, p) => sum + p.total, 0);
-        gananciasPeriodoContenedor.textContent = formatearPrecio(gananciasPeriodo);
+        const ingresosPeriodo = entregadosFiltrados.reduce((sum, p) => sum + p.total, 0);
+        gananciasPeriodoContenedor.textContent = formatearPrecio(ingresosPeriodo);
 
         let totalEfectivoPeriodo = 0;
         let totalTransferenciaPeriodo = 0;
+        let costoTotalPeriodo = 0;
+
         entregadosFiltrados.forEach(pedido => {
             if (pedido.metodo_pago === 'Efectivo') totalEfectivoPeriodo += pedido.total;
             else if (pedido.metodo_pago === 'Transferencia') totalTransferenciaPeriodo += pedido.total;
+
+            pedido.productos_detalle.forEach(item => {
+                const producto = todosLosProductos.find(p => p.id === item.id_producto);
+                if (producto && producto.precio_produccion) {
+                    costoTotalPeriodo += producto.precio_produccion * item.cantidad;
+                }
+            });
         });
         gananciasEfectivo.textContent = formatearPrecio(totalEfectivoPeriodo);
         gananciasTransferencia.textContent = formatearPrecio(totalTransferenciaPeriodo);
+        costoPeriodoContenedor.textContent = formatearPrecio(costoTotalPeriodo);
+        gananciaNetaPeriodoContenedor.textContent = formatearPrecio(ingresosPeriodo - costoTotalPeriodo);
 
         renderizarPedidos(pendientes, pedidosPendientesContenedor, 'pendientes');
         renderizarPedidos(confirmados, pedidosConfirmadosContenedor, 'confirmados');
@@ -322,28 +397,24 @@
                         <form class="form-editar-producto" data-id="${producto.id}">
                             <div class="space-y-2">
                                 <div>
-                                    <button type="button" class="collapsible-trigger-edit w-full text-left font-semibold bakesuki-brand-text p-2 rounded-lg hover:bg-pink-100">Nombre</button>
-                                    <div class="collapsible-content open p-2">
-                                        <input name="nombre" type="text" value="${producto.nombre}" class="w-full border-gray-300 rounded-md text-sm">
-                                    </div>
+                                    <label class="text-sm font-medium text-gray-700">Nombre</label>
+                                    <input name="nombre" type="text" value="${producto.nombre}" class="w-full border-gray-300 rounded-md text-sm mt-1">
                                 </div>
                                 <div>
-                                    <button type="button" class="collapsible-trigger-edit w-full text-left font-semibold bakesuki-brand-text p-2 rounded-lg hover:bg-pink-100">Descripción</button>
-                                    <div class="collapsible-content open p-2">
-                                        <textarea name="descripcion" class="w-full border-gray-300 rounded-md text-sm" rows="3">${producto.descripcion}</textarea>
-                                    </div>
+                                    <label class="text-sm font-medium text-gray-700">Descripción</label>
+                                    <textarea name="descripcion" class="w-full border-gray-300 rounded-md text-sm mt-1" rows="3">${producto.descripcion}</textarea>
                                 </div>
                                 <div>
-                                    <button type="button" class="collapsible-trigger-edit w-full text-left font-semibold bakesuki-brand-text p-2 rounded-lg hover:bg-pink-100">Precio</button>
-                                    <div class="collapsible-content open p-2">
-                                        <input name="precio" type="number" value="${producto.precio}" class="w-full border-gray-300 rounded-md text-sm">
-                                    </div>
+                                    <label class="text-sm font-medium text-gray-700">Precio de Venta</label>
+                                    <input name="precio" type="number" value="${producto.precio}" class="w-full border-gray-300 rounded-md text-sm mt-1">
                                 </div>
                                 <div>
-                                    <button type="button" class="collapsible-trigger-edit w-full text-left font-semibold bakesuki-brand-text p-2 rounded-lg hover:bg-pink-100">Stock</button>
-                                    <div class="collapsible-content open p-2">
-                                        <input name="stock" type="number" value="${producto.stock}" class="w-full border-gray-300 rounded-md text-sm">
-                                    </div>
+                                    <label class="text-sm font-medium text-gray-700">Precio de Producción</label>
+                                    <input name="precio_produccion" type="number" value="${producto.precio_produccion || 0}" class="w-full border-gray-300 rounded-md text-sm mt-1">
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-700">Stock</label>
+                                    <input name="stock" type="number" value="${producto.stock}" class="w-full border-gray-300 rounded-md text-sm mt-1">
                                 </div>
                                 <button type="submit" class="btn-primary text-sm font-bold py-2 px-4 rounded-lg mt-2">Guardar Cambios</button>
                             </div>
@@ -396,10 +467,7 @@
                 content.classList.toggle('open');
             }
         }
-        if(target.classList.contains('collapsible-trigger-edit')) {
-            const content = target.nextElementSibling;
-            content.classList.toggle('open');
-        }
+
         if(target.id === 'reiniciar-ganancias-btn') {
             // Esta función está deshabilitada por ahora
         }
@@ -436,6 +504,7 @@
                 nombre: formData.get('nombre'),
                 descripcion: formData.get('descripcion'),
                 precio: parseInt(formData.get('precio')),
+                precio_produccion: parseInt(formData.get('precio_produccion')),
                 stock: parseInt(formData.get('stock')),
             };
             const { error } = await supabase.from('productos').update(updates).eq('id', id);
@@ -470,6 +539,29 @@
             cargarDatos();
         })
         .subscribe();
+
+    // Inicializar Calendario
+    function actualizarCalendario() {
+        const fechasDeVenta = [...new Set(todosLosPedidos.filter(p => p.pagado).map(p => new Date(p.created_at)))];
+
+        if (calendario) {
+            calendario.destroy();
+        }
+        calendario = new Pikaday({
+            field: document.getElementById('calendario-container'),
+            bound: false,
+            container: document.getElementById('calendario-container'),
+            events: fechasDeVenta.map(d => d.toISOString().split('T')[0]),
+            onDraw: (pika) => {
+                pika.el.querySelectorAll('.pika-day').forEach(day => {
+                    const date = new Date(day.dataset.pikaYear, day.dataset.pikaMonth, day.dataset.pikaDay).toISOString().split('T')[0];
+                    if (fechasDeVenta.some(d => d.toISOString().split('T')[0] === date)) {
+                        day.classList.add('has-sale');
+                    }
+                });
+            }
+        });
+    }
 
 </script>
 </body>
