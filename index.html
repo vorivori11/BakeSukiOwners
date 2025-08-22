@@ -73,15 +73,12 @@
         <p class="text-xl text-gray-500 mt-2">Bakesuki</p>
     </header>
 
-    <!-- Sección de Ganancias -->
+    <!-- Sección de Ganancias y Filtros -->
     <section class="mb-12 grid grid-cols-1 md:grid-cols-2 gap-8">
         <div class="bg-white p-6 rounded-xl shadow-lg text-center">
-            <div class="flex justify-between items-center">
-                <h2 class="text-2xl font-bold bakesuki-brand-text">Ganancias Totales</h2>
-                <button id="reiniciar-ganancias-btn" class="btn-danger text-xs font-bold py-1 px-2 rounded-lg">Reiniciar</button>
-            </div>
+            <h2 class="text-2xl font-bold bakesuki-brand-text">Ganancias del Período</h2>
             <div id="ganancias-trigger" class="cursor-pointer">
-                <p id="ganancias-totales" class="text-4xl font-bold text-green-500 mt-2">Gs. 0</p>
+                <p id="ganancias-periodo" class="text-4xl font-bold text-blue-500 mt-2">Gs. 0</p>
                 <span class="text-xs text-gray-400">toca para ver detalles ▼</span>
             </div>
             <div id="ganancias-detalle" class="collapsible-content mt-4 text-left border-t pt-4">
@@ -96,9 +93,18 @@
             </div>
         </div>
         <div class="bg-white p-6 rounded-xl shadow-lg text-center">
-            <h2 class="text-2xl font-bold bakesuki-brand-text">Ganancias del Período</h2>
-            <p id="ganancias-periodo" class="text-4xl font-bold text-blue-500 mt-2">Gs. 0</p>
-            <p class="text-xs text-gray-400 mt-2">Filtrado en "Pedidos Entregados"</p>
+            <h2 class="text-2xl font-bold bakesuki-brand-text mb-4">Filtrar por Fecha</h2>
+            <div class="flex flex-col sm:flex-row gap-2 items-center justify-center">
+                <div>
+                    <label for="fecha-inicio" class="text-sm font-semibold">Desde:</label>
+                    <input type="date" id="fecha-inicio" class="border-gray-300 rounded-md text-sm">
+                </div>
+                <div>
+                    <label for="fecha-fin" class="text-sm font-semibold">Hasta:</label>
+                    <input type="date" id="fecha-fin" class="border-gray-300 rounded-md text-sm">
+                </div>
+                <button id="fecha-actual-btn" class="btn-primary text-sm font-bold py-2 px-3 rounded-lg">Hoy</button>
+            </div>
         </div>
     </section>
 
@@ -127,15 +133,8 @@
                 <div>
                     <div class="flex justify-between items-center mb-4 p-2 rounded-lg hover:bg-pink-100">
                         <button class="collapsible-trigger text-left text-2xl font-bold bakesuki-brand-text">Pedidos Entregados</button>
-                        <button id="borrar-entregados-btn" class="btn-danger text-xs font-bold py-1 px-2 rounded-lg">Borrar Todo</button>
                     </div>
                     <div class="collapsible-content">
-                        <div class="p-2 bg-gray-100 rounded-lg mb-4 flex flex-col md:flex-row gap-2 items-center">
-                            <label for="fecha-inicio" class="text-sm font-semibold">Desde:</label>
-                            <input type="date" id="fecha-inicio" class="border-gray-300 rounded-md text-sm">
-                            <label for="fecha-fin" class="text-sm font-semibold">Hasta:</label>
-                            <input type="date" id="fecha-fin" class="border-gray-300 rounded-md text-sm">
-                        </div>
                         <div id="pedidos-entregados-contenedor" class="space-y-4 p-1"></div>
                     </div>
                 </div>
@@ -159,11 +158,11 @@
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    const SUPABASE_URL = 'https://cajscvluvmwlllyrrgeb.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhanNjdmx1dm13bGxseXJyZ2ViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1NjU0MDksImV4cCI6MjA3MTE0MTQwOX0.7R8igId24CLfVfDVjy_Q0V1pzy_z_bpxLU933-72_sI';
+    const SUPABASE_URL = 'https://uyrylcylwkhqxseplquqp.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5cnlsY3l3a2hxeHNlcGxxdXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTA1NDYsImV4cCI6MjA3MTA2NjU0Nn0.0K3nPF1PMdR5qrRlp1Wv9zyBfFOtdTrmKqmT75e6J7Q';
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const gananciasContenedor = document.getElementById('ganancias-totales');
     const gananciasDetalle = document.getElementById('ganancias-detalle');
     const gananciasEfectivo = document.getElementById('ganancias-efectivo');
     const gananciasTransferencia = document.getElementById('ganancias-transferencia');
@@ -188,31 +187,12 @@
         } else {
             todosLosPedidos = data;
             filtrarYRenderizarPedidos();
-            calcularDesgloseGanancias();
         }
 
         // Cargar Productos
         const { data: productos, error: errorProductos } = await supabase.from('productos').select('*').order('nombre');
         if (errorProductos) console.error('Error al cargar productos:', errorProductos);
         else renderizarProductos(productos);
-    }
-
-    function calcularDesgloseGanancias() {
-        const pedidosPagados = todosLosPedidos.filter(p => p.pagado);
-        let totalEfectivo = 0;
-        let totalTransferencia = 0;
-
-        pedidosPagados.forEach(pedido => {
-            if (pedido.metodo_pago === 'Efectivo') {
-                totalEfectivo += pedido.total;
-            } else if (pedido.metodo_pago === 'Transferencia') {
-                totalTransferencia += pedido.total;
-            }
-        });
-
-        gananciasEfectivo.textContent = formatearPrecio(totalEfectivo);
-        gananciasTransferencia.textContent = formatearPrecio(totalTransferencia);
-        gananciasContenedor.textContent = formatearPrecio(totalEfectivo + totalTransferencia);
     }
 
     function filtrarYRenderizarPedidos() {
@@ -227,21 +207,31 @@
         let entregados = pedidosFiltrados.filter(p => p.pagado);
 
         // Filtrar entregados por fecha si se ha seleccionado un rango
+        let entregadosFiltrados = entregados;
         if (fechaInicio || fechaFin) {
-            entregados = entregados.filter(p => {
-                const fechaPedido = new Date(p.created_at).setHours(0,0,0,0);
-                const inicio = fechaInicio ? new Date(fechaInicio).getTime() : 0;
-                const fin = fechaFin ? new Date(fechaFin).getTime() : Infinity;
+            entregadosFiltrados = entregados.filter(p => {
+                const fechaPedido = new Date(p.created_at).toISOString().split('T')[0];
+                const inicio = fechaInicio || '1970-01-01';
+                const fin = fechaFin || '9999-12-31';
                 return fechaPedido >= inicio && fechaPedido <= fin;
             });
         }
 
-        const gananciasPeriodo = entregados.reduce((sum, p) => sum + p.total, 0);
+        const gananciasPeriodo = entregadosFiltrados.reduce((sum, p) => sum + p.total, 0);
         gananciasPeriodoContenedor.textContent = formatearPrecio(gananciasPeriodo);
+
+        let totalEfectivoPeriodo = 0;
+        let totalTransferenciaPeriodo = 0;
+        entregadosFiltrados.forEach(pedido => {
+            if (pedido.metodo_pago === 'Efectivo') totalEfectivoPeriodo += pedido.total;
+            else if (pedido.metodo_pago === 'Transferencia') totalTransferenciaPeriodo += pedido.total;
+        });
+        gananciasEfectivo.textContent = formatearPrecio(totalEfectivoPeriodo);
+        gananciasTransferencia.textContent = formatearPrecio(totalTransferenciaPeriodo);
 
         renderizarPedidos(pendientes, pedidosPendientesContenedor, 'pendientes');
         renderizarPedidos(confirmados, pedidosConfirmadosContenedor, 'confirmados');
-        renderizarPedidos(entregados, pedidosEntregadosContenedor, 'entregados');
+        renderizarPedidos(entregadosFiltrados, pedidosEntregadosContenedor, 'entregados');
     }
 
     function renderizarPedidos(pedidos, contenedor, tipo) {
@@ -392,9 +382,7 @@
         }
 
         if(target.classList.contains('collapsible-trigger')) {
-            // Para los títulos de sección, el botón y el contenido son hermanos del div padre
-            const parentDiv = target.parentElement;
-            const content = parentDiv.querySelector('.collapsible-content');
+            const content = target.closest('div').querySelector('.collapsible-content');
             if (content) {
                 content.classList.toggle('open');
             }
@@ -422,6 +410,12 @@
                 const { error } = await supabase.from('pedidos').delete().eq('pagado', true);
                 if (error) console.error('Error al borrar pedidos entregados:', error);
             }
+        }
+        if (target.id === 'fecha-actual-btn') {
+            const hoy = new Date().toISOString().split('T')[0];
+            fechaInicioInput.value = hoy;
+            fechaFinInput.value = hoy;
+            filtrarYRenderizarPedidos();
         }
     });
 
