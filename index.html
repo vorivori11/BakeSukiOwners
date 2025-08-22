@@ -119,7 +119,7 @@
                 <div>
                     <div class="collapsible-header flex justify-between items-center w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100 cursor-pointer">
                         <span>Pedidos Pendientes</span>
-                        <span>▼</span>
+                        <span class="transform transition-transform">▼</span>
                     </div>
                     <div class="collapsible-content open">
                         <div id="pedidos-pendientes-contenedor" class="space-y-4 p-1"></div>
@@ -129,7 +129,7 @@
                 <div>
                     <div class="collapsible-header flex justify-between items-center w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100 cursor-pointer">
                         <span>Pedidos por Pagar</span>
-                        <span>▼</span>
+                        <span class="transform transition-transform">▼</span>
                     </div>
                     <div class="collapsible-content">
                         <div id="pedidos-confirmados-contenedor" class="space-y-4 p-1"></div>
@@ -139,15 +139,9 @@
                 <div>
                     <div class="collapsible-header flex justify-between items-center w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100 cursor-pointer">
                         <span>Pedidos Entregados</span>
-                        <span>▼</span>
+                        <span class="transform transition-transform">▼</span>
                     </div>
                     <div class="collapsible-content">
-                        <div class="p-2 bg-gray-100 rounded-lg mb-4 flex flex-col md:flex-row gap-2 items-center">
-                            <label for="fecha-inicio-entregados" class="text-sm font-semibold">Desde:</label>
-                            <input type="date" id="fecha-inicio-entregados" class="border-gray-300 rounded-md text-sm">
-                            <label for="fecha-fin-entregados" class="text-sm font-semibold">Hasta:</label>
-                            <input type="date" id="fecha-fin-entregados" class="border-gray-300 rounded-md text-sm">
-                        </div>
                         <div id="pedidos-entregados-contenedor" class="space-y-4 p-1"></div>
                     </div>
                 </div>
@@ -160,7 +154,7 @@
             <div>
                 <div class="collapsible-header flex justify-between items-center w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100 cursor-pointer">
                     <span>Gestión de Productos</span>
-                    <span>▼</span>
+                    <span class="transform transition-transform">▼</span>
                 </div>
                 <div class="collapsible-content open">
                     <div id="productos-contenedor" class="space-y-4 p-1"></div>
@@ -189,8 +183,6 @@
     const searchInput = document.getElementById('search-pedidos');
     const fechaInicioInput = document.getElementById('fecha-inicio');
     const fechaFinInput = document.getElementById('fecha-fin');
-    const fechaInicioEntregadosInput = document.getElementById('fecha-inicio-entregados');
-    const fechaFinEntregadosInput = document.getElementById('fecha-fin-entregados');
 
     let todosLosPedidos = [];
 
@@ -225,11 +217,11 @@
 
         // Filtrar entregados por fecha si se ha seleccionado un rango
         let entregadosFiltrados = entregados;
-        if (fechaInicioEntregadosInput.value || fechaFinEntregadosInput.value) {
+        if (fechaInicio || fechaFin) {
             entregadosFiltrados = entregados.filter(p => {
                 const fechaPedido = new Date(p.created_at).toISOString().split('T')[0];
-                const inicio = fechaInicioEntregadosInput.value || '1970-01-01';
-                const fin = fechaFinEntregadosInput.value || '9999-12-31';
+                const inicio = fechaInicio || '1970-01-01';
+                const fin = fechaFin || '9999-12-31';
                 return fechaPedido >= inicio && fechaPedido <= fin;
             });
         }
