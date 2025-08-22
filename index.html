@@ -361,7 +361,13 @@
             document.getElementById(`edit-form-${id}`).classList.toggle('open');
         }
 
-        if(target.classList.contains('collapsible-trigger') || target.classList.contains('collapsible-trigger-edit')) {
+        if(target.classList.contains('collapsible-trigger')) {
+            const content = target.closest('div').nextElementSibling;
+            if (content && content.classList.contains('collapsible-content')) {
+                content.classList.toggle('open');
+            }
+        }
+        if(target.classList.contains('collapsible-trigger-edit')) {
             const content = target.nextElementSibling;
             content.classList.toggle('open');
         }
