@@ -393,9 +393,10 @@
         }
 
         if(target.classList.contains('collapsible-trigger')) {
-            const parent = target.closest('div');
-            const content = parent.nextElementSibling;
-            if (content && content.classList.contains('collapsible-content')) {
+            // Para los títulos de sección, el botón y el contenido son hermanos del div padre
+            const parentDiv = target.parentElement;
+            const content = parentDiv.querySelector('.collapsible-content');
+            if (content) {
                 content.classList.toggle('open');
             }
         }
