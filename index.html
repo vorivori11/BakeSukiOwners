@@ -74,8 +74,8 @@
     </header>
 
     <!-- Sección de Ganancias -->
-    <section class="mb-12">
-        <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-lg text-center">
+    <section class="mb-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-white p-6 rounded-xl shadow-lg text-center">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold bakesuki-brand-text">Ganancias Totales</h2>
                 <button id="reiniciar-ganancias-btn" class="btn-danger text-xs font-bold py-1 px-2 rounded-lg">Reiniciar</button>
@@ -94,6 +94,11 @@
                     <span id="ganancias-transferencia" class="font-semibold">Gs. 0</span>
                 </div>
             </div>
+        </div>
+        <div class="bg-white p-6 rounded-xl shadow-lg text-center">
+            <h2 class="text-2xl font-bold bakesuki-brand-text">Ganancias del Período</h2>
+            <p id="ganancias-periodo" class="text-4xl font-bold text-blue-500 mt-2">Gs. 0</p>
+            <p class="text-xs text-gray-400 mt-2">Filtrado en "Pedidos Entregados"</p>
         </div>
     </section>
 
@@ -125,6 +130,12 @@
                         <button id="borrar-entregados-btn" class="btn-danger text-xs font-bold py-1 px-2 rounded-lg">Borrar Todo</button>
                     </div>
                     <div class="collapsible-content">
+                        <div class="p-2 bg-gray-100 rounded-lg mb-4 flex flex-col md:flex-row gap-2 items-center">
+                            <label for="fecha-inicio" class="text-sm font-semibold">Desde:</label>
+                            <input type="date" id="fecha-inicio" class="border-gray-300 rounded-md text-sm">
+                            <label for="fecha-fin" class="text-sm font-semibold">Hasta:</label>
+                            <input type="date" id="fecha-fin" class="border-gray-300 rounded-md text-sm">
+                        </div>
                         <div id="pedidos-entregados-contenedor" class="space-y-4 p-1"></div>
                     </div>
                 </div>
@@ -156,11 +167,14 @@
     const gananciasDetalle = document.getElementById('ganancias-detalle');
     const gananciasEfectivo = document.getElementById('ganancias-efectivo');
     const gananciasTransferencia = document.getElementById('ganancias-transferencia');
+    const gananciasPeriodoContenedor = document.getElementById('ganancias-periodo');
     const pedidosPendientesContenedor = document.getElementById('pedidos-pendientes-contenedor');
     const pedidosConfirmadosContenedor = document.getElementById('pedidos-confirmados-contenedor');
     const pedidosEntregadosContenedor = document.getElementById('pedidos-entregados-contenedor');
     const productosContenedor = document.getElementById('productos-contenedor');
     const searchInput = document.getElementById('search-pedidos');
+    const fechaInicioInput = document.getElementById('fecha-inicio');
+    const fechaFinInput = document.getElementById('fecha-fin');
 
     let todosLosPedidos = [];
 
@@ -203,11 +217,27 @@
 
     function filtrarYRenderizarPedidos() {
         const searchTerm = searchInput.value.toLowerCase();
-        const pedidosFiltrados = todosLosPedidos.filter(p => p.nombre_cliente && p.nombre_cliente.toLowerCase().includes(searchTerm));
+        const fechaInicio = fechaInicioInput.value;
+        const fechaFin = fechaFinInput.value;
+
+        let pedidosFiltrados = todosLosPedidos.filter(p => p.nombre_cliente && p.nombre_cliente.toLowerCase().includes(searchTerm));
 
         const pendientes = pedidosFiltrados.filter(p => !p.confirmado);
         const confirmados = pedidosFiltrados.filter(p => p.confirmado && !p.pagado);
-        const entregados = pedidosFiltrados.filter(p => p.pagado);
+        let entregados = pedidosFiltrados.filter(p => p.pagado);
+
+        // Filtrar entregados por fecha si se ha seleccionado un rango
+        if (fechaInicio || fechaFin) {
+            entregados = entregados.filter(p => {
+                const fechaPedido = new Date(p.created_at).setHours(0,0,0,0);
+                const inicio = fechaInicio ? new Date(fechaInicio).getTime() : 0;
+                const fin = fechaFin ? new Date(fechaFin).getTime() : Infinity;
+                return fechaPedido >= inicio && fechaPedido <= fin;
+            });
+        }
+
+        const gananciasPeriodo = entregados.reduce((sum, p) => sum + p.total, 0);
+        gananciasPeriodoContenedor.textContent = formatearPrecio(gananciasPeriodo);
 
         renderizarPedidos(pendientes, pedidosPendientesContenedor, 'pendientes');
         renderizarPedidos(confirmados, pedidosConfirmadosContenedor, 'confirmados');
@@ -426,6 +456,8 @@
     });
 
     searchInput.addEventListener('input', filtrarYRenderizarPedidos);
+    fechaInicioInput.addEventListener('change', filtrarYRenderizarPedidos);
+    fechaFinInput.addEventListener('change', filtrarYRenderizarPedidos);
 
     // Cargar datos y escuchar cambios en tiempo real
     cargarDatos();
