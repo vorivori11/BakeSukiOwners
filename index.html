@@ -159,8 +159,9 @@
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    const SUPABASE_URL = 'https://cajscvluvmwlllyrrgeb.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhanNjdmx1dm13bGxseXJyZ2ViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1NjU0MDksImV4cCI6MjA3MTE0MTQwOX0.7R8igId24CLfVfDVjy_Q0V1pzy_z_bpxLU933-72_sI';
+    const SUPABASE_URL = 'https://uyrylcylwkhqxseplquqp.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5cnlsY3l3a2hxeHNlcGxxdXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0OTA1NDYsImV4cCI6MjA3MTA2NjU0Nn0.0K3nPF1PMdR5qrRlp1Wv9zyBfFOtdTrmKqmT75e6J7Q';
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const gananciasContenedor = document.getElementById('ganancias-totales');
@@ -392,7 +393,8 @@
         }
 
         if(target.classList.contains('collapsible-trigger')) {
-            const content = target.closest('div').nextElementSibling;
+            const parent = target.closest('div');
+            const content = parent.nextElementSibling;
             if (content && content.classList.contains('collapsible-content')) {
                 content.classList.toggle('open');
             }
