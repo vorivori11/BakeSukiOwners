@@ -120,7 +120,10 @@
                 </div>
                 <!-- Pedidos Entregados -->
                 <div>
-                    <button class="collapsible-trigger w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100">Pedidos Entregados</button>
+                    <div class="flex justify-between items-center mb-4 p-2 rounded-lg hover:bg-pink-100">
+                        <button class="collapsible-trigger text-left text-2xl font-bold bakesuki-brand-text">Pedidos Entregados</button>
+                        <button id="borrar-entregados-btn" class="btn-danger text-xs font-bold py-1 px-2 rounded-lg">Borrar Todo</button>
+                    </div>
                     <div class="collapsible-content">
                         <div id="pedidos-entregados-contenedor" class="space-y-4 p-1"></div>
                     </div>
@@ -164,11 +167,6 @@
     const formatearPrecio = (valor) => new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 }).format(valor);
 
     async function cargarDatos() {
-        // Cargar Ganancias y su desglose
-        const { data: ganancia, error: errorGanancia } = await supabase.from('ganancias').select('total_ganado').eq('id', 1).single();
-        if (errorGanancia) console.error('Error al cargar ganancias:', errorGanancia);
-        else gananciasContenedor.textContent = formatearPrecio(ganancia.total_ganado);
-
         // Cargar Pedidos
         const { data, error } = await supabase.from('pedidos').select('*').order('created_at', { ascending: true });
         if (error) {
@@ -200,6 +198,7 @@
 
         gananciasEfectivo.textContent = formatearPrecio(totalEfectivo);
         gananciasTransferencia.textContent = formatearPrecio(totalTransferencia);
+        gananciasContenedor.textContent = formatearPrecio(totalEfectivo + totalTransferencia);
     }
 
     function filtrarYRenderizarPedidos() {
@@ -379,6 +378,12 @@
         }
         if (target.closest('#ganancias-trigger')) {
             gananciasDetalle.classList.toggle('open');
+        }
+        if (target.id === 'borrar-entregados-btn') {
+            if (confirm('¿Estás seguro de que quieres borrar TODOS los pedidos entregados? Esta acción es irreversible.')) {
+                const { error } = await supabase.from('pedidos').delete().eq('pagado', true);
+                if (error) console.error('Error al borrar pedidos entregados:', error);
+            }
         }
     });
 
