@@ -3,213 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Bakesuki</title>
+    <title>Calculador de Costos - Bakesuki</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Lobster&display=swap" rel="stylesheet">
-    <!-- Pikaday Calendar CSS -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #FDF4F0; }
         .font-lobster { font-family: 'Lobster', cursive; }
         .bakesuki-brand-text { color: #6D2828; }
         .btn-primary { background-color: #D98B99; color: white; }
         .btn-primary:hover { background-color: #C77583; }
-        .btn-secondary { background-color: #a78bfa; color: white; }
-        .btn-secondary:hover { background-color: #8b5cf6; }
         .btn-danger { background-color: #ef4444; color: white; }
         .btn-danger:hover { background-color: #dc2626; }
         .btn-edit { background-color: #fbbf24; color: white; }
         .btn-edit:hover { background-color: #f59e0b; }
 
-        /* Contenedor desplegable con scroll */
-        .collapsible-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s ease-in-out;
-        }
-        .collapsible-content.open {
-            max-height: 60vh; /* Altura máxima del 60% de la pantalla */
-            overflow-y: auto; /* Scroll vertical si el contenido es más alto */
-        }
+        .collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; }
+        .collapsible-content.open { max-height: 2000px; }
 
-        /* Estilo de la barra de scroll */
-        .collapsible-content::-webkit-scrollbar { width: 8px; }
-        .collapsible-content::-webkit-scrollbar-track { background: #F9EBE4; border-radius: 10px; }
-        .collapsible-content::-webkit-scrollbar-thumb { background: #D98B99; border-radius: 10px; }
-        .collapsible-content::-webkit-scrollbar-thumb:hover { background: #C77583; }
-
-        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #22c55e; }
-        input:checked + .slider:before { transform: translateX(22px); }
-        /* Animación de clic */
         @keyframes click-effect {
             0% { transform: scale(1); }
             50% { transform: scale(0.95); }
             100% { transform: scale(1); }
         }
-        .clicked {
-            animation: click-effect 0.2s ease-out;
-        }
-
-        /* Estilos del Calendario Temático */
-        .pika-single {
-            background: #ffffff; /* Fondo blanco */
-            border: 1px solid #D98B99;
-            border-radius: 8px;
-        }
-        .pika-title {
-            color: #6D2828;
-            font-weight: bold;
-        }
-        .pika-lmonth, .pika-rmonth {
-            color: #D98B99 !important;
-        }
-        .pika-button:hover {
-            background-color: #fce7f3 !important;
-            border-radius: 50%;
-        }
-        .is-today .pika-button {
-            color: #6D2828;
-            font-weight: bold;
-            text-decoration: underline;
-        }
-        .is-selected .pika-button {
-            background-color: #D98B99 !important;
-            box-shadow: none;
-            border-radius: 50%;
-        }
-        .pika-day.has-sale .pika-button {
-            background-color: transparent; /* Sin fondo de círculo */
-            border-radius: 0;
-            font-weight: bold;
-        }
-        .pika-day.has-sale:after {
-            content: '';
-            display: block;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background-color: #D98B99;
-            margin: -4px auto 0;
-        }
+        .clicked { animation: click-effect 0.2s ease-out; }
     </style>
 </head>
 <body class="text-gray-800">
 
 <div class="container mx-auto p-4 md:p-8">
     <header class="text-center mb-12">
-        <h1 class="text-5xl font-lobster bakesuki-brand-text">Panel de Administración</h1>
+        <h1 class="text-5xl font-lobster bakesuki-brand-text">Calculador de Costos</h1>
         <p class="text-xl text-gray-500 mt-2">Bakesuki</p>
     </header>
 
-    <!-- Sección de Ganancias y Filtros -->
-    <section class="mb-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div class="bg-white p-6 rounded-xl shadow-lg text-center">
-            <h2 class="text-2xl font-bold bakesuki-brand-text">Ganancias del Período</h2>
-            <div id="ganancias-trigger" class="cursor-pointer">
-                <p id="ganancias-periodo" class="text-4xl font-bold text-blue-500 mt-2">Gs. 0</p>
-                <span class="text-xs text-gray-400">toca para ver detalles ▼</span>
-            </div>
-            <div id="ganancias-detalle" class="collapsible-content mt-4 text-left border-t pt-4 space-y-2">
-                <div class="flex justify-between text-gray-700">
-                    <span>Ingresos (Efectivo):</span>
-                    <span id="ganancias-efectivo" class="font-semibold">Gs. 0</span>
-                </div>
-                <div class="flex justify-between text-gray-700">
-                    <span>Ingresos (Transferencia):</span>
-                    <span id="ganancias-transferencia" class="font-semibold">Gs. 0</span>
-                </div>
-                <div class="flex justify-between text-red-500">
-                    <span>Costo de Producción:</span>
-                    <span id="costo-periodo" class="font-semibold">Gs. 0</span>
-                </div>
-                <div class="flex justify-between text-green-600 font-bold border-t mt-2 pt-2">
-                    <span>Ganancia Neta:</span>
-                    <span id="ganancia-neta-periodo">Gs. 0</span>
-                </div>
-            </div>
-        </div>
-        <div class="bg-white p-6 rounded-xl shadow-lg text-center">
-            <h2 class="text-2xl font-bold bakesuki-brand-text mb-4">Filtrar por Fecha</h2>
-            <div class="flex flex-col sm:flex-row gap-2 items-center justify-center">
-                <div>
-                    <label for="fecha-inicio" class="text-sm font-semibold">Desde:</label>
-                    <input type="date" id="fecha-inicio" class="border-gray-300 rounded-md text-sm">
-                </div>
-                <div>
-                    <label for="fecha-fin" class="text-sm font-semibold">Hasta:</label>
-                    <input type="date" id="fecha-fin" class="border-gray-300 rounded-md text-sm">
-                </div>
-                <button id="fecha-actual-btn" class="btn-primary text-sm font-bold py-2 px-3 rounded-lg">Hoy</button>
-            </div>
-        </div>
-    </section>
-
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        <!-- Columna de Pedidos -->
+        <!-- Columna de Ingredientes -->
         <section>
-            <div class="mb-6">
-                <input type="search" id="search-pedidos" placeholder="🔍 Buscar pedido por nombre..." class="w-full p-2 border-gray-300 rounded-md shadow-sm">
-            </div>
-            <div class="space-y-6">
-                <!-- Pedidos Pendientes -->
-                <div>
-                    <div class="collapsible-header flex justify-between items-center w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100 cursor-pointer">
-                        <span>Pedidos Pendientes</span>
-                        <span class="transform transition-transform">▼</span>
-                    </div>
-                    <div class="collapsible-content open">
-                        <div id="pedidos-pendientes-contenedor" class="space-y-4 p-1"></div>
-                    </div>
+            <div>
+                <div class="collapsible-header flex justify-between items-center w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100 cursor-pointer">
+                    <span>Gestión de Ingredientes</span>
+                    <span class="transform transition-transform">▼</span>
                 </div>
-                <!-- Pedidos por Pagar -->
-                <div>
-                    <div class="collapsible-header flex justify-between items-center w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100 cursor-pointer">
-                        <span>Pedidos por Pagar</span>
-                        <span class="transform transition-transform">▼</span>
+                <div class="collapsible-content open">
+                    <div class="bg-white p-6 rounded-xl shadow-lg mb-6">
+                        <form id="form-nuevo-ingrediente">
+                            <h3 class="font-bold bakesuki-brand-text mb-2">Añadir Nuevo Ingrediente</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <input name="nombre" type="text" placeholder="Nombre del Ingrediente" required class="w-full border-gray-300 rounded-md">
+                                <input name="costo_compra" type="number" placeholder="Costo de Compra (Gs.)" required class="w-full border-gray-300 rounded-md">
+                                <input name="cantidad_compra" type="number" placeholder="Cantidad Comprada" required class="w-full border-gray-300 rounded-md">
+                                <select name="unidad_medida" required class="w-full border-gray-300 rounded-md">
+                                    <option value="gr">Gramos (gr)</option>
+                                    <option value="ml">Mililitros (ml)</option>
+                                    <option value="un">Unidades (un)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full mt-4 btn-primary font-bold py-2 px-4 rounded-lg">Añadir Ingrediente</button>
+                        </form>
                     </div>
-                    <div class="collapsible-content">
-                        <div id="pedidos-confirmados-contenedor" class="space-y-4 p-1"></div>
-                    </div>
-                </div>
-                <!-- Pedidos Entregados -->
-                <div>
-                    <div class="collapsible-header flex justify-between items-center w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100 cursor-pointer">
-                        <span>Pedidos Entregados</span>
-                        <span class="transform transition-transform">▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        <div id="pedidos-entregados-contenedor" class="space-y-4 p-1"></div>
-                    </div>
+                    <div id="ingredientes-contenedor" class="space-y-2"></div>
                 </div>
             </div>
         </section>
 
-        <!-- Columna de Productos y Calendario -->
+        <!-- Columna de Productos -->
         <section>
-            <!-- Gestión de Stock -->
             <div>
                 <div class="collapsible-header flex justify-between items-center w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100 cursor-pointer">
-                    <span>Gestión de Productos</span>
+                    <span>Costos de Producción por Producto</span>
                     <span class="transform transition-transform">▼</span>
                 </div>
                 <div class="collapsible-content open">
+                    <div class="flex justify-end mb-4">
+                        <button id="exportar-excel-btn" class="btn-secondary font-bold py-2 px-4 rounded-lg">Exportar a Excel</button>
+                    </div>
                     <div id="productos-contenedor" class="space-y-4 p-1"></div>
-                </div>
-            </div>
-            <!-- Calendario de Ventas -->
-            <div class="mt-6">
-                <div class="collapsible-header flex justify-between items-center w-full text-left text-2xl font-bold bakesuki-brand-text mb-4 p-2 rounded-lg hover:bg-pink-100 cursor-pointer">
-                    <span>Calendario de Ventas</span>
-                    <span class="transform transition-transform">▼</span>
-                </div>
-                <div class="collapsible-content open">
-                    <div id="calendario-container" class="bg-white p-2 rounded-xl shadow-lg"></div>
                 </div>
             </div>
         </section>
@@ -219,164 +89,51 @@
 <!-- Supabase SDK y Librerías -->
 <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    // Pikaday para el calendario
-    import Pikaday from 'https://cdn.jsdelivr.net/npm/pikaday/+esm';
+    // SheetJS para exportar a Excel
+    import 'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js';
 
     const SUPABASE_URL = 'https://cajscvluvmwlllyrrgeb.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhanNjdmx1dm13bGxseXJyZ2ViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1NjU0MDksImV4cCI6MjA3MTE0MTQwOX0.7R8igId24CLfVfDVjy_Q0V1pzy_z_bpxLU933-72_sI';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const gananciasDetalle = document.getElementById('ganancias-detalle');
-    const gananciasEfectivo = document.getElementById('ganancias-efectivo');
-    const gananciasTransferencia = document.getElementById('ganancias-transferencia');
-    const gananciasPeriodoContenedor = document.getElementById('ganancias-periodo');
-    const costoPeriodoContenedor = document.getElementById('costo-periodo');
-    const gananciaNetaPeriodoContenedor = document.getElementById('ganancia-neta-periodo');
-    const pedidosPendientesContenedor = document.getElementById('pedidos-pendientes-contenedor');
-    const pedidosConfirmadosContenedor = document.getElementById('pedidos-confirmados-contenedor');
-    const pedidosEntregadosContenedor = document.getElementById('pedidos-entregados-contenedor');
     const productosContenedor = document.getElementById('productos-contenedor');
-    const searchInput = document.getElementById('search-pedidos');
-    const fechaInicioInput = document.getElementById('fecha-inicio');
-    const fechaFinInput = document.getElementById('fecha-fin');
+    const ingredientesContenedor = document.getElementById('ingredientes-contenedor');
+    const formNuevoIngrediente = document.getElementById('form-nuevo-ingrediente');
 
-    let todosLosPedidos = [];
     let todosLosProductos = [];
-    let calendario;
+    let todosLosIngredientes = [];
 
     const formatearPrecio = (valor) => new Intl.NumberFormat('es-PY', { style: 'currency', currency: 'PYG', maximumFractionDigits: 0 }).format(valor);
 
     async function cargarDatos() {
-        // Cargar Productos primero para tener los costos
+        // Cargar Ingredientes
+        const { data: ingredientes, error: errorIngredientes } = await supabase.from('ingredientes').select('*').order('nombre');
+        if (errorIngredientes) console.error('Error al cargar ingredientes:', errorIngredientes);
+        else {
+            todosLosIngredientes = ingredientes;
+            renderizarIngredientes(ingredientes);
+        }
+
+        // Cargar Productos
         const { data: productos, error: errorProductos } = await supabase.from('productos').select('*').order('nombre');
-        if (errorProductos) {
-            console.error('Error al cargar productos:', errorProductos);
-        } else {
+        if (errorProductos) console.error('Error al cargar productos:', errorProductos);
+        else {
             todosLosProductos = productos;
             renderizarProductos(productos);
         }
-
-        // Cargar Pedidos
-        const { data, error } = await supabase.from('pedidos').select('*').order('created_at', { ascending: true });
-        if (error) {
-            console.error('Error al cargar todos los pedidos:', error);
-        } else {
-            todosLosPedidos = data;
-            filtrarYRenderizarPedidos();
-            actualizarCalendario();
-        }
     }
 
-    function filtrarYRenderizarPedidos() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const fechaInicio = fechaInicioInput.value;
-        const fechaFin = fechaFinInput.value;
-
-        let pedidosFiltrados = todosLosPedidos.filter(p => p.nombre_cliente && p.nombre_cliente.toLowerCase().includes(searchTerm));
-
-        const pendientes = pedidosFiltrados.filter(p => !p.confirmado);
-        const confirmados = pedidosFiltrados.filter(p => p.confirmado && !p.pagado);
-        let entregados = pedidosFiltrados.filter(p => p.pagado);
-
-        // Filtrar entregados por fecha si se ha seleccionado un rango
-        let entregadosFiltrados = entregados;
-        if (fechaInicio || fechaFin) {
-            entregadosFiltrados = entregados.filter(p => {
-                const fechaPedido = new Date(p.created_at).toISOString().split('T')[0];
-                const inicio = fechaInicio || '1970-01-01';
-                const fin = fechaFin || '9999-12-31';
-                return fechaPedido >= inicio && fechaPedido <= fin;
-            });
-        }
-
-        const ingresosPeriodo = entregadosFiltrados.reduce((sum, p) => sum + p.total, 0);
-        gananciasPeriodoContenedor.textContent = formatearPrecio(ingresosPeriodo);
-
-        let totalEfectivoPeriodo = 0;
-        let totalTransferenciaPeriodo = 0;
-        let costoTotalPeriodo = 0;
-
-        entregadosFiltrados.forEach(pedido => {
-            if (pedido.metodo_pago === 'Efectivo') totalEfectivoPeriodo += pedido.total;
-            else if (pedido.metodo_pago === 'Transferencia') totalTransferenciaPeriodo += pedido.total;
-
-            pedido.productos_detalle.forEach(item => {
-                const producto = todosLosProductos.find(p => p.id === item.id_producto);
-                if (producto && producto.precio_produccion) {
-                    costoTotalPeriodo += producto.precio_produccion * item.cantidad;
-                }
-            });
-        });
-        gananciasEfectivo.textContent = formatearPrecio(totalEfectivoPeriodo);
-        gananciasTransferencia.textContent = formatearPrecio(totalTransferenciaPeriodo);
-        costoPeriodoContenedor.textContent = formatearPrecio(costoTotalPeriodo);
-        gananciaNetaPeriodoContenedor.textContent = formatearPrecio(ingresosPeriodo - costoTotalPeriodo);
-
-        renderizarPedidos(pendientes, pedidosPendientesContenedor, 'pendientes');
-        renderizarPedidos(confirmados, pedidosConfirmadosContenedor, 'confirmados');
-        renderizarPedidos(entregadosFiltrados, pedidosEntregadosContenedor, 'entregados');
-    }
-
-    function renderizarPedidos(pedidos, contenedor, tipo) {
-        contenedor.innerHTML = '';
-        if (pedidos.length === 0) {
-            contenedor.innerHTML = `<p class="text-center text-gray-500">No hay pedidos en esta sección.</p>`;
-            return;
-        }
-        pedidos.forEach(pedido => {
-            const pedidoCard = document.createElement('div');
-            pedidoCard.className = 'bg-white p-4 rounded-lg shadow-sm';
-            let controlesHTML = '';
-
-            if (tipo === 'pendientes') {
-                controlesHTML = `
-                        <button data-id="${pedido.id}" class="confirmar-pedido-btn btn-secondary text-sm font-bold py-1 px-3 rounded-lg">Confirmar</button>
-                        <button data-id="${pedido.id}" class="eliminar-pedido-btn btn-danger text-sm font-bold py-1 px-3 rounded-lg">Eliminar</button>
-                    `;
-            } else if (tipo === 'confirmados') {
-                controlesHTML = `
-                        <button data-id="${pedido.id}" class="cancelar-pedido-btn btn-danger text-sm font-bold py-1 px-3 rounded-lg mr-2">Cancelar</button>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm font-semibold">${pedido.pagado ? 'Pagado' : 'No Pagado'}</span>
-                            <label class="switch">
-                                <input type="checkbox" data-id="${pedido.id}" class="pagado-toggle-btn" ${pedido.pagado ? 'checked' : ''}>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                    `;
-            } else if (tipo === 'entregados') {
-                controlesHTML = `
-                        <button data-id="${pedido.id}" class="eliminar-pedido-btn btn-danger text-sm font-bold py-1 px-3 rounded-lg">Borrar</button>
-                    `;
-            }
-
-            const detalleProductosHTML = pedido.productos_detalle.map(p => `
-                    <div class="flex justify-between text-sm">
-                        <span>${p.cantidad}x ${p.nombre}</span>
-                        <span>${formatearPrecio(p.cantidad * p.precio_unitario)}</span>
-                    </div>
-                `).join('');
-
-            pedidoCard.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <p class="font-bold text-sm text-gray-500">${new Date(pedido.created_at).toLocaleString('es-PY')}</p>
-                        <p class="font-bold">${formatearPrecio(pedido.total)}</p>
-                    </div>
-                    <p class="font-semibold mt-2">Cliente: <span class="font-normal">${pedido.nombre_cliente || 'No especificado'}</span></p>
-                    <p class="font-semibold mt-1">Método de Pago: <span class="font-normal">${pedido.metodo_pago}</span></p>
-                    <div class="mt-2 border-t pt-2 space-y-1">
-                        ${detalleProductosHTML}
-                    </div>
-                    <div class="mt-2 border-t pt-2">
-                        <textarea data-id="${pedido.id}" class="notas-internas-textarea w-full border-gray-300 rounded-md text-sm mt-2" rows="2" placeholder="Añadir nota interna...">${pedido.notas_internas || ''}</textarea>
-                        <button data-id="${pedido.id}" class="guardar-nota-btn btn-primary text-xs font-bold py-1 px-2 rounded-lg mt-1">Guardar Nota</button>
-                    </div>
-                    <div class="flex justify-end space-x-2 mt-4">
-                        ${controlesHTML}
-                    </div>
+    function renderizarIngredientes(ingredientes) {
+        ingredientesContenedor.innerHTML = '';
+        ingredientes.forEach(ingrediente => {
+            const ingredienteCard = document.createElement('div');
+            ingredienteCard.className = 'bg-white p-2 rounded-lg shadow-sm flex justify-between items-center';
+            ingredienteCard.innerHTML = `
+                    <span>${ingrediente.nombre} (${ingrediente.cantidad_compra} ${ingrediente.unidad_medida}) - ${formatearPrecio(ingrediente.costo_compra)}</span>
+                    <button data-id="${ingrediente.id}" class="eliminar-ingrediente-btn btn-danger text-xs font-bold py-1 px-2 rounded-lg">x</button>
                 `;
-            contenedor.appendChild(pedidoCard);
+            ingredientesContenedor.appendChild(ingredienteCard);
         });
     }
 
@@ -385,38 +142,59 @@
         productos.forEach(producto => {
             const productoCard = document.createElement('div');
             productoCard.className = 'bg-white p-4 rounded-lg shadow-sm';
+
+            let costoTotalReceta = 0;
+            const receta = producto.receta || [];
+            receta.forEach(itemReceta => {
+                const ingrediente = todosLosIngredientes.find(i => i.id === itemReceta.ingrediente_id);
+                if(ingrediente) {
+                    const costoPorUnidad = ingrediente.costo_compra / ingrediente.cantidad_compra;
+                    costoTotalReceta += costoPorUnidad * itemReceta.cantidad_usada;
+                }
+            });
+
+            const unidades = producto.unidades_por_receta || 1;
+            const costoProduccionUnitario = costoTotalReceta / unidades;
+            const gananciaNeta = producto.precio - costoProduccionUnitario;
+
+            const ingredientesHTML = receta.map(itemReceta => {
+                const ingrediente = todosLosIngredientes.find(i => i.id === itemReceta.ingrediente_id);
+                return `<li class="text-sm flex justify-between">
+                                <span>${ingrediente ? ingrediente.nombre : 'Ingrediente borrado'}: ${itemReceta.cantidad_usada} ${ingrediente ? ingrediente.unidad_medida : ''}</span>
+                                <button data-prod-id="${producto.id}" data-ing-id="${ingrediente.id}" class="remover-ingrediente-btn text-red-500 font-bold">x</button>
+                             </li>`;
+            }).join('');
+
+            const opcionesIngredientesHTML = todosLosIngredientes.map(i => `<option value="${i.id}">${i.nombre} (${i.unidad_medida})</option>`).join('');
+
             productoCard.innerHTML = `
                     <div class="flex justify-between items-center">
-                        <div>
-                            <p class="font-bold bakesuki-brand-text">${producto.nombre}</p>
-                            <p class="text-sm text-gray-500">Stock actual: <span class="font-bold">${producto.stock}</span></p>
-                        </div>
-                        <button data-id="${producto.id}" class="editar-producto-btn btn-edit text-sm font-bold py-1 px-3 rounded-lg">Editar</button>
+                        <p class="font-bold bakesuki-brand-text">${producto.nombre}</p>
+                        <button data-id="${producto.id}" class="editar-receta-btn btn-edit text-sm font-bold py-1 px-3 rounded-lg">Editar Receta</button>
+                    </div>
+                    <div class="mt-2 text-sm space-y-1">
+                        <p>Precio Venta: <span class="font-semibold">${formatearPrecio(producto.precio)}</span></p>
+                        <p>Costo Producción (unitario): <span class="font-semibold">${formatearPrecio(costoProduccionUnitario)}</span></p>
+                        <p class="font-bold text-green-600">Ganancia Neta (unitaria): <span class="font-semibold">${formatearPrecio(gananciaNeta)}</span></p>
                     </div>
                     <div id="edit-form-${producto.id}" class="collapsible-content mt-4 pt-4 border-t">
-                        <form class="form-editar-producto" data-id="${producto.id}">
-                            <div class="space-y-2">
-                                <div>
-                                    <label class="text-sm font-medium text-gray-700">Nombre</label>
-                                    <input name="nombre" type="text" value="${producto.nombre}" class="w-full border-gray-300 rounded-md text-sm mt-1">
+                        <form class="form-editar-receta" data-id="${producto.id}">
+                             <div class="mb-4">
+                                <label class="text-sm font-medium text-gray-700">Unidades que rinde esta receta:</label>
+                                <input name="unidades_por_receta" type="number" value="${unidades}" class="w-full border-gray-300 rounded-md text-sm mt-1">
+                            </div>
+                            <h4 class="font-semibold mb-2">Receta Actual:</h4>
+                            <ul class="list-disc list-inside mb-4">${ingredientesHTML || '<li class="text-sm text-gray-500">Sin ingredientes asignados.</li>'}</ul>
+                            <div class="space-y-2 bg-gray-50 p-3 rounded-lg">
+                                <h4 class="font-semibold">Añadir Ingrediente:</h4>
+                                <div class="flex gap-2">
+                                    <select name="ingrediente_id" class="w-full border-gray-300 rounded-md text-sm">
+                                        <option value="">Selecciona un ingrediente...</option>
+                                        ${opcionesIngredientesHTML}
+                                    </select>
+                                    <input name="cantidad_usada" type="number" placeholder="Cantidad" class="w-1/3 border-gray-300 rounded-md text-sm">
                                 </div>
-                                <div>
-                                    <label class="text-sm font-medium text-gray-700">Descripción</label>
-                                    <textarea name="descripcion" class="w-full border-gray-300 rounded-md text-sm mt-1" rows="3">${producto.descripcion}</textarea>
-                                </div>
-                                <div>
-                                    <label class="text-sm font-medium text-gray-700">Precio de Venta</label>
-                                    <input name="precio" type="number" value="${producto.precio}" class="w-full border-gray-300 rounded-md text-sm mt-1">
-                                </div>
-                                <div>
-                                    <label class="text-sm font-medium text-gray-700">Precio de Producción</label>
-                                    <input name="precio_produccion" type="number" value="${producto.precio_produccion || 0}" class="w-full border-gray-300 rounded-md text-sm mt-1">
-                                </div>
-                                <div>
-                                    <label class="text-sm font-medium text-gray-700">Stock</label>
-                                    <input name="stock" type="number" value="${producto.stock}" class="w-full border-gray-300 rounded-md text-sm mt-1">
-                                </div>
-                                <button type="submit" class="btn-primary text-sm font-bold py-2 px-4 rounded-lg mt-2">Guardar Cambios</button>
+                                <button type="submit" class="btn-primary text-sm font-bold py-1 px-3 rounded-lg">Añadir a Receta</button>
                             </div>
                         </form>
                     </div>
@@ -425,110 +203,109 @@
         });
     }
 
-    // Eventos delegados para los botones
+    // Eventos
     document.addEventListener('click', async (e) => {
         const target = e.target;
         const id = target.dataset.id;
 
-        // Animación de clic
-        if (target.tagName === 'BUTTON') {
-            target.classList.add('clicked');
-            target.addEventListener('animationend', () => {
-                target.classList.remove('clicked');
-            }, { once: true });
+        if (target.classList.contains('collapsible-header')) {
+            const content = target.nextElementSibling;
+            content.classList.toggle('open');
         }
-
-        if (target.classList.contains('confirmar-pedido-btn')) {
-            const { error } = await supabase.from('pedidos').update({ confirmado: true }).eq('id', id);
-            if (error) console.error('Error al confirmar pedido:', error);
-        }
-
-        if (target.classList.contains('cancelar-pedido-btn')) {
-            if (confirm('¿Estás seguro de que quieres cancelar este pedido? El stock se devolverá.')) {
-                const { error } = await supabase.from('pedidos').update({ confirmado: false }).eq('id', id);
-                if (error) console.error('Error al cancelar pedido:', error);
-            }
-        }
-
-        if (target.classList.contains('eliminar-pedido-btn')) {
-            if (confirm('¿Estás seguro de que quieres eliminar este pedido? No afectará el stock ni las ganancias.')) {
-                const { error } = await supabase.from('pedidos').delete().eq('id', id);
-                if (error) console.error('Error al eliminar pedido:', error);
-            }
-        }
-
-        if (target.classList.contains('editar-producto-btn')) {
+        if (target.classList.contains('editar-receta-btn')) {
             document.getElementById(`edit-form-${id}`).classList.toggle('open');
         }
-
-        if(target.classList.contains('collapsible-header')) {
-            const content = target.nextElementSibling;
-            if (content && content.classList.contains('collapsible-content')) {
-                content.classList.toggle('open');
+        if (target.classList.contains('eliminar-ingrediente-btn')) {
+            if (confirm('¿Seguro que quieres eliminar este ingrediente?')) {
+                await supabase.from('ingredientes').delete().eq('id', id);
             }
         }
-
-        if(target.id === 'reiniciar-ganancias-btn') {
-            // Esta función está deshabilitada por ahora
-        }
-        if (target.classList.contains('guardar-nota-btn')) {
-            const nota = document.querySelector(`.notas-internas-textarea[data-id="${id}"]`).value;
-            const { error } = await supabase.from('pedidos').update({ notas_internas: nota }).eq('id', id);
-            if (error) console.error('Error al guardar la nota:', error);
-        }
-        if (target.closest('#ganancias-trigger')) {
-            gananciasDetalle.classList.toggle('open');
-        }
-        if (target.id === 'borrar-entregados-btn') {
-            if (confirm('¿Estás seguro de que quieres borrar TODOS los pedidos entregados? Esta acción es irreversible.')) {
-                const { error } = await supabase.from('pedidos').delete().eq('pagado', true);
-                if (error) console.error('Error al borrar pedidos entregados:', error);
-            }
-        }
-        if (target.id === 'fecha-actual-btn') {
-            const hoy = new Date().toISOString().split('T')[0];
-            fechaInicioInput.value = hoy;
-            fechaFinInput.value = hoy;
-            filtrarYRenderizarPedidos();
+        if (target.classList.contains('remover-ingrediente-btn')) {
+            const productoId = target.dataset.prodId;
+            const ingredienteId = target.dataset.ingId;
+            const producto = todosLosProductos.find(p => p.id === productoId);
+            const nuevaReceta = producto.receta.filter(i => i.ingrediente_id !== ingredienteId);
+            await supabase.from('productos').update({ receta: nuevaReceta }).eq('id', productoId);
         }
     });
 
-    document.addEventListener('submit', async (e) => {
+    formNuevoIngrediente.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const target = e.target;
-        const id = target.dataset.id;
+        const formData = new FormData(formNuevoIngrediente);
+        const ingrediente = {
+            nombre: formData.get('nombre'),
+            costo_compra: parseInt(formData.get('costo_compra')),
+            cantidad_compra: parseInt(formData.get('cantidad_compra')),
+            unidad_medida: formData.get('unidad_medida'),
+        };
+        const { error } = await supabase.from('ingredientes').insert([ingrediente]);
+        if (error) {
+            console.error('Error al añadir ingrediente:', error);
+            alert('Error al añadir ingrediente.');
+        } else {
+            formNuevoIngrediente.reset();
+        }
+    });
 
-        if (target.classList.contains('form-editar-producto')) {
-            const formData = new FormData(target);
-            const updates = {
-                nombre: formData.get('nombre'),
-                descripcion: formData.get('descripcion'),
-                precio: parseInt(formData.get('precio')),
-                precio_produccion: parseInt(formData.get('precio_produccion')),
-                stock: parseInt(formData.get('stock')),
-            };
-            const { error } = await supabase.from('productos').update(updates).eq('id', id);
-            if (error) {
-                console.error('Error al actualizar producto:', error);
-                alert('Error al actualizar el producto.');
-            } else {
-                document.getElementById(`edit-form-${id}`).classList.remove('open');
+    productosContenedor.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!e.target.classList.contains('form-editar-receta')) return;
+
+        const form = e.target;
+        const productoId = form.dataset.id;
+        const ingredienteId = form.ingrediente_id.value;
+        const cantidadUsada = parseInt(form.cantidad_usada.value);
+        const unidadesPorReceta = parseInt(form.unidades_por_receta.value);
+
+        const producto = todosLosProductos.find(p => p.id === productoId);
+        const recetaActual = producto.receta || [];
+        let nuevaReceta = [...recetaActual];
+
+        if (ingredienteId && cantidadUsada) {
+            nuevaReceta.push({ ingrediente_id: ingredienteId, cantidad_usada: cantidadUsada });
+        }
+
+        // Calcular el costo de producción unitario
+        let costoTotalReceta = 0;
+        nuevaReceta.forEach(itemReceta => {
+            const ingrediente = todosLosIngredientes.find(i => i.id === itemReceta.ingrediente_id);
+            if(ingrediente) {
+                const costoPorUnidad = ingrediente.costo_compra / ingrediente.cantidad_compra;
+                costoTotalReceta += costoPorUnidad * itemReceta.cantidad_usada;
             }
+        });
+        const costoProduccionUnitario = Math.round(costoTotalReceta / (unidadesPorReceta || 1));
+
+        const { error } = await supabase.from('productos').update({
+            receta: nuevaReceta,
+            unidades_por_receta: unidadesPorReceta,
+            costo_produccion_unitario: costoProduccionUnitario // Guardar el costo calculado
+        }).eq('id', productoId);
+
+        if(error) console.error("Error al actualizar receta:", error);
+        else {
+            form.ingrediente_id.value = '';
+            form.cantidad_usada.value = '';
         }
     });
 
-    document.addEventListener('change', async (e) => {
-        const target = e.target;
-        const id = target.dataset.id;
-        if (target.classList.contains('pagado-toggle-btn')) {
-            const { error } = await supabase.from('pedidos').update({ pagado: target.checked }).eq('id', id);
-            if (error) console.error('Error al actualizar estado de pago:', error);
-        }
-    });
+    document.getElementById('exportar-excel-btn').addEventListener('click', () => {
+        const data = todosLosProductos.map(producto => {
+            const gananciaNeta = producto.precio - (producto.costo_produccion_unitario || 0);
+            return {
+                "Producto": producto.nombre,
+                "Precio de Venta": producto.precio,
+                "Costo de Producción (unitario)": producto.costo_produccion_unitario || 0,
+                "Ganancia Neta (unitaria)": gananciaNeta,
+                "Stock Actual": producto.stock
+            }
+        });
 
-    searchInput.addEventListener('input', filtrarYRenderizarPedidos);
-    fechaInicioInput.addEventListener('change', filtrarYRenderizarPedidos);
-    fechaFinInput.addEventListener('change', filtrarYRenderizarPedidos);
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Costos Bakesuki");
+        XLSX.writeFile(workbook, "Costos_Bakesuki.xlsx");
+    });
 
     // Cargar datos y escuchar cambios en tiempo real
     cargarDatos();
@@ -539,29 +316,6 @@
             cargarDatos();
         })
         .subscribe();
-
-    // Inicializar Calendario
-    function actualizarCalendario() {
-        const fechasDeVenta = [...new Set(todosLosPedidos.filter(p => p.pagado).map(p => new Date(p.created_at)))];
-
-        if (calendario) {
-            calendario.destroy();
-        }
-        calendario = new Pikaday({
-            field: document.getElementById('calendario-container'),
-            bound: false,
-            container: document.getElementById('calendario-container'),
-            events: fechasDeVenta.map(d => d.toISOString().split('T')[0]),
-            onDraw: (pika) => {
-                pika.el.querySelectorAll('.pika-day').forEach(day => {
-                    const date = new Date(day.dataset.pikaYear, day.dataset.pikaMonth, day.dataset.pikaDay).toISOString().split('T')[0];
-                    if (fechasDeVenta.some(d => d.toISOString().split('T')[0] === date)) {
-                        day.classList.add('has-sale');
-                    }
-                });
-            }
-        });
-    }
 
 </script>
 </body>
